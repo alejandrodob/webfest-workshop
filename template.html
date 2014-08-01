@@ -1,29 +1,6 @@
 <div class="row">
-    <div class="col-md-6 col-md-offset-2" style="height:50px">
-        <div id="success" class="alert alert-success" style="display:none;">
-            <a class="close">×</a>
-            Well done! Your answer has been saved
-        </div>
-        <div id="loading" class="alert alert-info" style="display:none;">
-            <a class="close">×</a>
-            Loading next task...
-        </div>
-        <div id="taskcompleted" class="alert alert-info" style="display:none;">
-            The task has been completed! Thanks a lot!
-        </div>
-        <div id="finish" class="alert alert-success" style="display:none;">
-            Congratulations! You have participated in all available tasks!
-            <br/>
-            <div class="alert-actions">
-                <a class="btn small" href="/">Go back</a>
-                <a class="btn small" href="/app">or, Check other projects</a>
-            </div>
-        </div>
-        <div id="error" class="alert alert-danger" style="display:none;">
-            <a class="close">×</a>
-            <strong>Error!</strong> Something went wrong, please contact the site administrators
-        </div>
-    </div>
+<!-- Here you can place some generic <div> content to show the user some messages
+for error, success, loading, etc. -->
 </div>
 
 
@@ -31,19 +8,14 @@
     <div class="col-md-6 ">
         <h1 id="question"></h1>
         <div id="answer">
-            <button class="btn btn-success btn-answer" value='Yes'><i class="fa fa-thumbs-o-up"></i> Yes</button>
-            <button class="btn btn-danger btn-answer" value='No'><i class="fa fa-thumbs-o-down"></i> No</button>
-            <button class="btn btn-answer" value='NoPhoto'><i class="fa fa-exclamation"></i> No photo</button>
-            <button class="btn btn-answer" value='NotKnown'><i class="fa fa-question-circle"></i> I don't know</button>
-        </div>
-        <p>You are working now on task: <span id="task-id" class="label label-warning">#</span></p>
-        <p>You have completed: <span id="done" class="label label-info"></span> tasks from <span id="total" class="label label-info"></span></p>
-        <div class="progress progress-striped">
-            <div id="progress" rel="tooltip" title="#" class="progress-bar" style="width: 0%;"  role="progressbar"></div>
+<!-- Here you should place the HTML for the buttons and other stuff needed to create and save the user answers.
+An example button is already here: -->
+            <button class="btn btn-answer" value='NotKnown'><i class="fa fa-question-circle"></i> I'm a dumb button</button>
         </div>
     </div>
     <div class="col-md-6">
         <a id="photo-link" href="#">
+<!--             This is a "by default" image with a "Loading..." message -->
             <img id="photo" src="http://i.imgur.com/GeHxzb7.png" style="max-width=100%">
         </a>
     </div>
@@ -53,60 +25,23 @@
 <script>
 
 
-function loadUserProgress() {
-    pybossa.userProgress('marslife').done(function(data){
-        var pct = Math.round((data.done*100)/data.total);
-        $("#progress").css("width", pct.toString() +"%");
-        $("#progress").attr("title", pct.toString() + "% completed!");
-        $("#progress").tooltip({'placement': 'left'}); 
-        $("#total").text(data.total);
-        $("#done").text(data.done);
-    });
-}
-
 pybossa.taskLoaded(function(task, deferred) {
-    if ( !$.isEmptyObject(task) ) {
-        var img = $('<img />');
-        img.load(function() {
-            deferred.resolve(task);
-        });
-        img.attr('src', task.info.img_url).css('height', 460);
-        img.addClass('img-thumbnail img-responsive');
-        task.info.image = img;
-    }
-    else {
-        deferred.resolve(task);
-    }
+    // Once the task is loaded, you can load some other stuff here (like the associated images).
+    // Take into account that while you're working on one task, the next one will be loaded...
+    // Don't forget to call deferred.resolve(), is the way to tell that we're done and ready to go on!
 });
 
 pybossa.presentTask(function(task, deferred) {
-
     if ( !$.isEmptyObject(task) ) {
-        loadUserProgress();
-        $('#photo-link').html('').append(task.info.image);
-        $("#photo-link").attr("href", task.info.img_url);
-        $("#question").html(task.info.question);
-        $('#task-id').html(task.id);
-        $('.btn-answer').off('click').on('click', function(evt) {
-            var answer = $(evt.target).attr("value") || $(evt.target).parent().attr("value");;
-            if (typeof answer != 'undefined') {
-                pybossa.saveTask(task.id, answer).done(function() {
-                    deferred.resolve();
-                });
-                $("#loading").fadeIn(500);
-            }
-            else {
-                $("#error").show();
-            }
-        });
-        $("#loading").hide();
+        // So, now that you have a task, it's time to show it to the user and set everything up...
+        // What should it happen when a user wants to create and/or save and answer? it all goes here.
+        // To save an answer, don't forget to call pybossa.saveTask(answer, function(data){what should happenafter saving it})
+        // Again, if you're ready, call deferred.resolve() to go into the next task
     }
     else {
-        $(".skeleton").hide();
-        $("#loading").hide();
-        $("#finish").fadeIn(500);
+        // If this is the case, no more tasks are available for the user, so tell him so!
     }
 });
 
-pybossa.run('marslife');
+pybossa.run('Here will go the short_name of your project');
 </script>
