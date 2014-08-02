@@ -1,0 +1,158 @@
+<div class="row">
+    <div class="col-md-6 col-md-offset-2" style="height:50px">
+        <div id="success" class="alert alert-success" style="display:none;">
+            <a class="close">×</a>
+            Well done! Your answer has been saved
+        </div>
+        <div id="loading" class="alert alert-info" style="display:none;">
+            <a class="close">×</a>
+            Loading next task...
+        </div>
+        <div id="taskcompleted" class="alert alert-info" style="display:none;">
+            The task has been completed! Thanks a lot!
+        </div>
+        <div id="finish" class="alert alert-success" style="display:none;">
+            Congratulations! You have participated in all available tasks!
+            <br/>
+            <div class="alert-actions">
+                <a class="btn small" href="/">Go back</a>
+                <a class="btn small" href="/app">or, Check other projects</a>
+            </div>
+        </div>
+        <div id="error" class="alert alert-danger" style="display:none;">
+            <a class="close">×</a>
+            <strong>Error!</strong> Something went wrong, please contact the site administrators
+        </div>
+    </div>
+</div>
+
+
+<div class="row skeleton">
+    <div class="col-md-6 ">
+        <h1 id="question"></h1>
+        <div id="answer">
+            <button class="btn btn-success btn-answer" value='Save'><i class="fa fa-save"></i> Save</button>
+            <button class="btn btn-answer" value='NoPhoto'><i class="fa fa-exclamation"></i> No photo</button>
+            <button class="btn btn-answer" value='NotKnown'><i class="fa fa-question-circle"></i> I don't know</button>
+            <button class="btn btn-inverse" value="addAnim" id="addAnim" type="button"><i class="fa fa-plus"></i> Add</button>
+        </div>
+        <input id="inputName" type="text" name="inputName" placeholder="name of the creature" role="textbox">
+        <input id="inputNumber" type="number" name="inputNumber" placeholder="0">
+        <div class="row">
+            <div id="animals" class="col-md-4 col-md-offset-1 btn-group-vertical btn-group-sm">
+                <p class="text-center"><strong>Found Creatures</strong></p>
+            </div>
+        </div>
+        <p>You are working now on task: <span id="task-id" class="label label-warning">#</span></p>
+        <p>You have completed: <span id="done" class="label label-info"></span> tasks from <span id="total" class="label label-info"></span></p>
+        <div class="progress progress-striped">
+            <div id="progress" rel="tooltip" title="#" class="progress-bar" style="width: 0%;"  role="progressbar"></div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <a id="photo-link" href="#">
+            <img id="photo" src="http://i.imgur.com/GeHxzb7.png" style="max-width=100%">
+        </a>
+    </div>
+</div>
+
+
+<script>
+
+
+function loadUserProgress() {
+    pybossa.userProgress('Here will go the short_name of your project').done(function(data){
+        var pct = Math.round((data.done*100)/data.total);
+        $("#progress").css("width", pct.toString() +"%");
+        $("#progress").attr("title", pct.toString() + "% completed!");
+        $("#progress").tooltip({'placement': 'left'}); 
+        $("#total").text(data.total);
+        $("#done").text(data.done);
+    });
+}
+
+pybossa.taskLoaded(function(task, deferred) {
+    if ( !$.isEmptyObject(task) ) {
+        var img = $('<img />');
+        img.load(function() {
+            deferred.resolve(task);
+        });
+        img.attr('src', task.info.img_url).css('height', 460);
+        img.addClass('img-thumbnail img-responsive');
+        task.info.image = img;
+    }
+    else {
+        deferred.resolve(task);
+    }
+});
+
+pybossa.presentTask(function(task, deferred) {
+
+    if ( !$.isEmptyObject(task) ) {
+        loadUserProgress();
+        clearPreviousTask();
+        $('#photo-link').html('').append(task.info.image);
+        $("#photo-link").attr("href", task.info.img_url);
+        $("#question").html(task.info.question);
+        $('#task-id').html(task.id);
+        $('#addAnim').off('click').on('click', function(evt) {
+            var animal ={ "name": $('#inputName').val(), "number": $('#inputNumber').val() };
+            addNewAnim(animal);
+        });
+        $('.btn-answer').off('click').on('click', function(evt) {
+            var answer = $(evt.target).attr("value") || $(evt.target).parent().attr("value");
+            if (answer === 'Save') {
+                answer = [];
+                $('.animal').each(function() {
+                    answer.push($(this).data('anim'));
+                });
+            }
+            if (typeof answer != 'undefined') {
+                pybossa.saveTask(task.id, answer).done(function() {
+                    console.log(answer)
+                    deferred.resolve();
+                });
+                $("#loading").fadeIn(500);
+            }
+            else {
+                $("#error").show();
+            }
+        });
+        $("#loading").hide();
+    }
+    else {
+        $(".skeleton").hide();
+        $("#loading").hide();
+        $("#finish").fadeIn(500);
+    }
+});
+
+function addNewAnim(animal) {
+    var elementToAdd = $("<button>", {
+        type: "button",
+        class: "btn btn-default animal",
+    });
+    elementToAdd.data('anim', animal);
+    elementToAdd.append("<span>"+ animal['name'] +" --> " + animal['number']+"</span><span style='display:none'>Delete</span>");
+    elementToAdd.on('click', function(evt) {
+        $(this).remove();
+    });
+    elementToAdd.hover(function() {
+        $(this).children().toggle();
+        $(this).toggleClass('btn-default btn-danger');
+    });
+    $('#animals').append(elementToAdd);
+    $('#inputName').val('');
+    $('#inputNumber').val(0);
+}
+
+function clearPreviousTask() {
+    $('.animal').each(function() {
+        $(this).remove();
+    });
+    $('#inputName').val('');
+    $('#inputNumber').val(0);
+}
+
+pybossa.run('Here will go the short_name of your project');
+</script>
