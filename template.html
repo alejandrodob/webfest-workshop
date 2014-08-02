@@ -36,6 +36,7 @@
             <button class="btn btn-answer" value='NoPhoto'><i class="fa fa-exclamation"></i> No photo</button>
             <button class="btn btn-answer" value='NotKnown'><i class="fa fa-question-circle"></i> I don't know</button>
         </div>
+<!--         make here some inputs to be able to enter the name and number of each different animal you find...-->
     </div>
     <div class="col-md-6">
         <a id="photo-link" href="#">
@@ -49,21 +50,48 @@
 <script>
 
 
+
 pybossa.taskLoaded(function(task, deferred) {
-    // Once the task is loaded, you can load some other stuff here (like the associated images).
-    // Take into account that while you're working on one task, the next one will be loaded...
-    // Don't forget to call deferred.resolve(), is the way to tell that we're done and ready to go on!
+    if ( !$.isEmptyObject(task) ) {
+        var img = $('<img />');
+        img.load(function() {
+            deferred.resolve(task);
+        });
+        img.attr('src', task.info.img_url).css('height', 460);
+        img.addClass('img-thumbnail img-responsive');
+        task.info.image = img;
+    }
+    else {
+        deferred.resolve(task);
+    }
 });
 
 pybossa.presentTask(function(task, deferred) {
+
     if ( !$.isEmptyObject(task) ) {
-        // So, now that you have a task, it's time to show it to the user and set everything up...
-        // What should it happen when a user wants to create and/or save and answer? it all goes here.
-        // To save an answer, don't forget to call pybossa.saveTask(answer, function(data){what should happenafter saving it})
-        // Again, if you're ready, call deferred.resolve() to go into the next task
+        $('#photo-link').html('').append(task.info.image);
+        $("#photo-link").attr("href", task.info.img_url);
+        $("#question").html(task.info.question);
+        $('#task-id').html(task.id);
+        $('.btn-answer').off('click').on('click', function(evt) {
+            var answer = $(evt.target).attr("value") || $(evt.target).parent().attr("value");
+            // Here you'll now need to consider about how to save a more complex answer
+            if (typeof answer != 'undefined') {
+                pybossa.saveTask(task.id, answer).done(function() {
+                    deferred.resolve();
+                });
+                $("#loading").fadeIn(500);
+            }
+            else {
+                $("#error").show();
+            }
+        });
+        $("#loading").hide();
     }
     else {
-        // If this is the case, no more tasks are available for the user, so tell him so!
+        $(".skeleton").hide();
+        $("#loading").hide();
+        $("#finish").fadeIn(500);
     }
 });
 
