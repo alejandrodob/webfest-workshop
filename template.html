@@ -43,16 +43,12 @@
                 <p class="text-center"><strong>Found Creatures</strong></p>
             </div>
         </div>
-  <!--       The loadUserProgress function should act on these DOM elements to display graphically the progress... but you can
-        make it your own way, though, so feel free to delete it! -->
         <p>You are working now on task: <span id="task-id" class="label label-warning">#</span></p>
         <p>You have completed: <span id="done" class="label label-info"></span> tasks from <span id="total" class="label label-info"></span></p>
         <div class="progress progress-striped">
             <div id="progress" rel="tooltip" title="#" class="progress-bar" style="width: 0%;"  role="progressbar"></div>
         </div>
     </div>
-
-    
     <div class="col-md-6">
         <a id="photo-link" href="#">
             <img id="photo" src="http://i.imgur.com/GeHxzb7.png" style="max-width=100%">
@@ -63,12 +59,17 @@
 
 <script>
 
+
 function loadUserProgress() {
     pybossa.userProgress('Here will go the short_name of your project').done(function(data){
-        // load the progress of current user from PyBossa server and display here
+        var pct = Math.round((data.done*100)/data.total);
+        $("#progress").css("width", pct.toString() +"%");
+        $("#progress").attr("title", pct.toString() + "% completed!");
+        $("#progress").tooltip({'placement': 'left'}); 
+        $("#total").text(data.total);
+        $("#done").text(data.done);
     });
 }
-// You'll also need to call this function in the appropriate moment
 
 pybossa.taskLoaded(function(task, deferred) {
     if ( !$.isEmptyObject(task) ) {
@@ -88,6 +89,7 @@ pybossa.taskLoaded(function(task, deferred) {
 pybossa.presentTask(function(task, deferred) {
 
     if ( !$.isEmptyObject(task) ) {
+        loadUserProgress();
         clearPreviousTask();
         $('#photo-link').html('').append(task.info.image);
         $("#photo-link").attr("href", task.info.img_url);
